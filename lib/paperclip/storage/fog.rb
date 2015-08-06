@@ -44,6 +44,7 @@ module Paperclip
         end unless defined?(Fog)
 
         base.instance_eval do
+          @options[:fog_retries] ||= 1
           unless @options[:url].to_s.match(/\A:fog.*url\Z/)
             @options[:path]  = @options[:path].gsub(/:url/, @options[:url]).gsub(/\A:rails_root\/public\/system\//, '')
             @options[:url]   = ':fog_public_url'
@@ -97,6 +98,7 @@ module Paperclip
         for style, file in @queued_for_write do
           log("saving #{path(style)}")
           retried = false
+          tries = 0
           begin
             directory.files.create(fog_file.merge(
               :body         => file,
@@ -108,6 +110,10 @@ module Paperclip
             raise if retried
             retried = true
             directory.save
+            retry
+          rescue Excon::Errors::Error => e
+            tries += 1
+            raise e if tries >= @options[:fog_retries]
             retry
           ensure
             file.rewind
