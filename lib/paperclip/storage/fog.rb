@@ -125,6 +125,10 @@ module Paperclip
             tries += 1
             raise e if tries >= @options[:fog_retries]
             retry
+          rescue Excon::Errors::Error => e
+            tries += 1
+            raise e if tries >= @options[:fog_retries]
+            retry
           ensure
             file.rewind
           end
