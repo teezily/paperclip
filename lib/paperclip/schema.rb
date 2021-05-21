@@ -5,17 +5,14 @@ module Paperclip
   module Schema
     COLUMNS = {:file_name    => :string,
                :content_type => :string,
-               :file_size    => :integer,
+               :file_size    => :bigint,
                :updated_at   => :datetime}
 
     def self.included(base)
       ActiveRecord::ConnectionAdapters::Table.send :include, TableDefinition
       ActiveRecord::ConnectionAdapters::TableDefinition.send :include, TableDefinition
       ActiveRecord::ConnectionAdapters::AbstractAdapter.send :include, Statements
-
-      if defined?(ActiveRecord::Migration::CommandRecorder) # Rails 3.1+
-        ActiveRecord::Migration::CommandRecorder.send :include, CommandRecorder
-      end
+      ActiveRecord::Migration::CommandRecorder.send :include, CommandRecorder
     end
 
     module Statements
@@ -35,12 +32,9 @@ module Paperclip
       def remove_attachment(table_name, *attachment_names)
         raise ArgumentError, "Please specify attachment name in your remove_attachment call in your migration." if attachment_names.empty?
 
-        options = attachment_names.extract_options!
-
         attachment_names.each do |attachment_name|
-          COLUMNS.each_pair do |column_name, column_type|
-            column_options = options.merge(options[column_name.to_sym] || {})
-            remove_column(table_name, "#{attachment_name}_#{column_name}", column_type, column_options)
+          COLUMNS.keys.each do |column_name|
+            remove_column(table_name, "#{attachment_name}_#{column_name}")
           end
         end
       end

@@ -1,4 +1,134 @@
-4.3.0:
+6.1.0 (2018-07-27):
+
+* BUGFIX: Don't double-encode URLs (Roderick Monje).
+* BUGFIX: Only use the content_type when it exists (Jean-Philippe Doyle).
+* STABILITY: Better handling of the content-disposition header. Now supports
+  file name that is either enclosed or not in double quotes and is case
+  insensitive as per RC6266 grammar (Hasan Kumar, Yves Riel).
+* STABILITY: Change database column type of attachment file size from unsigned 4-byte
+  `integer` to unsigned 8-byte `bigint`. The former type limits attachment size
+  to just over 2GB, which can easily be exceeded by a large video file (Laurent
+  Arnoud, Alen Zamanyan).
+* STABILITY: Better error message when thumbnail processing errors (Hayden Ball).
+* STABILITY: Fix file linking issues around Windows (Akihiko Odaki).
+* STABILITY: Files without an extension will now be checked for spoofing attempts
+  (George Walters II).
+* STABILITY: Manually close Tempfiles when we are done with them (Erkki Eilonen).
+
+6.0.0 (2018-03-09):
+
+* Improvement: Depend only on `aws-sdk-s3` instead of `aws-sdk` (https://github.com/thoughtbot/paperclip/pull/2481)
+
+5.3.0 (2018-03-09):
+
+* Improvement: Use `FactoryBot` instead of `FactoryGirl` (https://github.com/thoughtbot/paperclip/pull/2501)
+* Improvement: README updates (https://github.com/thoughtbot/paperclip/pull/2411, https://github.com/thoughtbot/paperclip/pull/2433, https://github.com/thoughtbot/paperclip/pull/2374, https://github.com/thoughtbot/paperclip/pull/2417, https://github.com/thoughtbot/paperclip/pull/2536)
+* Improvement: Remove Ruby 2.4 deprecation warning (https://github.com/thoughtbot/paperclip/pull/2401)
+* Improvement: Rails 5 migration compatibility (https://github.com/thoughtbot/paperclip/pull/2470)
+* Improvement: Documentation around post processing (https://github.com/thoughtbot/paperclip/pull/2381)
+* Improvement: S3 hostname example documentation (https://github.com/thoughtbot/paperclip/pull/2379)
+* Bugfix: Allow paperclip to load in IRB (https://github.com/thoughtbot/paperclip/pull/2369)
+* Bugfix: MIME type detection (https://github.com/thoughtbot/paperclip/issues/2527)
+* Bugfix: Bad tempfile state after symlink failure (https://github.com/thoughtbot/paperclip/pull/2540)
+* Bugfix: Rewind file after Fog bucket creation (https://github.com/thoughtbot/paperclip/pull/2572)
+* Improvement: Use `Terrapin` instead of `Cocaine` (https://github.com/thoughtbot/paperclip/pull/2553)
+
+5.2.1 (2018-01-25):
+
+* Bugfix: Fix copying files on Windows. (#2532)
+
+5.2.0 (2018-01-23):
+
+* Security: Remove the automatic loading of URI adapters. Some of these
+  adapters can be specially crafted to expose your network topology. (#2435)
+* Bugfix: The rake task no longer rescues `Exception`. (#2476)
+* Bugfix: Handle malformed `Content-Disposition` headers (#2283)
+* Bugfix: The `:only_process` option works when passed a lambda again. (#2289)
+* Improvement: Added `:use_accelerate_endpoint` option when using S3 to enable
+  [Amazon S3 Transfer Acceleration](http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html)
+  (#2291)
+* Improvement: Make the fingerprint digest configurable per attachment. The
+  default remains MD5. Making this configurable means it can change in a future
+  version because it is not considered secure anymore against intentional file
+  corruption. For more info, see https://en.wikipedia.org/wiki/MD5#Security
+
+  You can change the digest used for an attachment by adding the
+  `:adapter_options` parameter to the `has_attached_file` options like this:
+  `has_attached_file :avatar, adapter_options: { hash_digest: Digest::SHA256 }`
+
+  Use the rake task to regenerate fingerprints with the new digest for a given
+  class. Note that this does **not** check the file integrity using the old
+  fingerprint. Run the following command to regenerate fingerprints for all
+  User attachments:
+  `CLASS=User rake paperclip:refresh:fingerprints`
+  You can optionally limit the attachment that will be processed, e.g:
+  `CLASS=User ATTACHMENT=avatar rake paperclip:refresh:fingerprints` (#2229)
+* Improvement: The new `frame_index` option on the thumbnail processor allows
+  you to select a specific frame from an animated upload to use as a thumbnail.
+  Initial support is for mkv, avi, MP4, mov, MPEG, and GIF. (#2155)
+* Improvement: Instead of copying files, use hard links. This is an
+  optimization. (#2120)
+* Improvement: S3 storage option `:s3_prefixes_in_alias`. (#2287)
+* Improvement: Fog option `:fog_public` can be a lambda. (#2302)
+* Improvement: One fewer warning on JRuby. (#2352)
+* Ruby 2.4.0 compatibility (doesn't use Fixnum anymore)
+
+5.1.0 (2016-08-19):
+
+* Add default `content_type_detector` to `UploadedFileAdapter` (#2270)
+* Default S3 protocol to empty string (#2038)
+* Don't write original file if it wasn't reprocessed (#1993)
+* Disallow trailing newlines in regular expressions (#2266)
+* Support for readbyte in Paperclip attachments (#2034)
+* (port from 4.3) Uri io adapter uses the content-disposition filename (#2250)
+* General refactors and documentation improvements
+
+5.0.0 (2016-07-01):
+
+* Improvement: Add `read_timeout` configuration for URI Adapter download_content method.
+* README adjustments for Ruby beginners (add links, elucidate model in Quick Start)
+* Bugfix: Now it's possible to save images from URLs with special characters [#1932]
+* Bugfix: Return false when file to copy is not present in cloud storage [#2173]
+* Automatically close file while checking mime type [#2016]
+* Add `read_timeout` option to `UriAdapter#download_content` method [#2232]
+* Fix a nil error in content type validation matcher [#1910]
+* Documentation improvements
+
+5.0.0.beta2 (2016-04-01):
+
+* Bugfix: Dynamic fog directory option is now respected
+* Bugfix: Fixes cocaine duplicated paths [#2169]
+* Removal of dead code (older versions of Rails and AWS SDK)
+* README adjustments
+
+5.0.0.beta1 (2016-03-13):
+
+* Bug Fix: megabytes of mime-types info in logs when a spoofed media type is detected.
+* Drop support to end-of-life'd ruby 2.0.
+* Drop support for end-of-life'd Rails 3.2 and 4.1
+* Drop support for AWS v1
+* Remove tests for JRuby and Rubinius from Travis CI (they were failing)
+* Improvement: Add `fog_options` configuration to send options to fog when
+  storing files.
+* Extracted repository for locales only:  https://github.com/thoughtbot/paperclip-i18n
+* Bugfix: Original file could be unlinked during `post_process_style`, producing failures
+* Bugfix for image magick scaling images up
+* Memory consumption improvements
+* `url` on a unpersisted record returns `default_url` rather than `nil`
+* Improvement: aws-sdk v2 support
+  https://github.com/thoughtbot/paperclip/pull/1903
+
+  If your Gemfile contains aws-sdk (>= 2.0.0) and aws-sdk-v1, paperclip will use
+  aws-sdk v2. With aws-sdk v2, S3 storage requires you to set the s3_region.
+  s3_region may be nested in s3_credentials, and (if not nested in
+  s3_credentials) it may be a Proc.
+
+4.3
+
+See patch versions in v4.3 NEWS:
+https://github.com/thoughtbot/paperclip/blob/v4.3/NEWS
+
+4.3.0 (2015-06-18):
 
 * Improvement: Update aws-sdk and cucumber gem versions.
 * Improvement: Add `length` alias for `size` method in AbstractAdapter.
@@ -11,7 +141,7 @@
 * Ruby Versioning: Drop support for 1.9.3 (EOL'ed)
 * Rails Versioning: Drop support for 4.0.0 (EOL'ed)
 
-4.2.4:
+4.2.4 (2015-06-05):
 
 * Rollback backwards incompatible change, allowing paperclip to run on
   Ruby >= 1.9.2.

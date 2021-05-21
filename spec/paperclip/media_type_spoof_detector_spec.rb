@@ -44,9 +44,44 @@ describe Paperclip::MediaTypeSpoofDetector do
     end
   end
 
-  it "rejects a file if named .html and is as HTML, but we're told JPG" do
-    file = File.open(fixture_file("empty.html"))
-    assert Paperclip::MediaTypeSpoofDetector.using(file, "empty.html", "image/jpg").spoofed?
+  context "file named .html and is as HTML, but we're told JPG" do
+    let(:file) { File.open(fixture_file("empty.html")) }
+    let(:spoofed?) { Paperclip::MediaTypeSpoofDetector.using(file, "empty.html", "image/jpg").spoofed? }
+
+    it "rejects the file" do
+      assert spoofed?
+    end
+
+    it "logs info about the detected spoof" do
+      Paperclip.expects(:log).with('Content Type Spoof: Filename empty.html (image/jpg from Headers, ["text/html"] from Extension), content type discovered from file command: text/html. See documentation to allow this combination.')
+      spoofed?
+    end
+  end
+
+  context "GIF file named without extension, but we're told GIF" do
+    let(:file) { File.open(fixture_file("animated")) }
+    let(:spoofed?) do
+      Paperclip::MediaTypeSpoofDetector.
+        using(file, "animated", "image/gif").
+        spoofed?
+    end
+
+    it "accepts the file" do
+      assert !spoofed?
+    end
+  end
+
+  context "GIF file named without extension, but we're told HTML" do
+    let(:file) { File.open(fixture_file("animated")) }
+    let(:spoofed?) do
+      Paperclip::MediaTypeSpoofDetector.
+        using(file, "animated", "text/html").
+        spoofed?
+    end
+
+    it "rejects the file" do
+      assert spoofed?
+    end
   end
 
   it "does not reject if content_type is empty but otherwise checks out" do
@@ -65,6 +100,21 @@ describe Paperclip::MediaTypeSpoofDetector do
       assert !spoofed
     ensure
       Paperclip.options[:content_type_mappings] = {}
+    end
+  end
+
+  context "#type_from_file_command" do
+    let(:file) { File.new(fixture_file("empty.html")) }
+    let(:detector) { Paperclip::MediaTypeSpoofDetector.new(file, "html", "") }
+
+    it "does work with the output of old versions of file" do
+      Paperclip.stubs(:run).returns("text/html charset=us-ascii")
+      expect(detector.send(:type_from_file_command)).to eq("text/html")
+    end
+
+    it "does work with the output of new versions of file" do
+      Paperclip.stubs(:run).returns("text/html; charset=us-ascii")
+      expect(detector.send(:type_from_file_command)).to eq("text/html")
     end
   end
 end
